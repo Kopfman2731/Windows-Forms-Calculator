@@ -44,8 +44,8 @@
             bt0 = new Button();
             btPoint = new Button();
             btDivision = new Button();
-            btParaOpen = new Button();
-            btParaClose = new Button();
+            btParOpen = new Button();
+            btParClose = new Button();
             btResult = new Button();
             lboxCurrent = new ListBox();
             lboxHistory = new ListBox();
@@ -243,29 +243,30 @@
             btDivision.UseVisualStyleBackColor = true;
             btDivision.Click += btDivision_Click;
             // 
-            // btParaOpen
+            // btParOpen
             // 
-            btParaOpen.Cursor = Cursors.Hand;
-            btParaOpen.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
-            btParaOpen.Location = new Point(9, 511);
-            btParaOpen.Name = "btParaOpen";
-            btParaOpen.Size = new Size(67, 64);
-            btParaOpen.TabIndex = 20;
-            btParaOpen.Text = "(";
-            btParaOpen.UseVisualStyleBackColor = true;
-            btParaOpen.Click += btParaOpen_Click;
+            btParOpen.Cursor = Cursors.Hand;
+            btParOpen.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            btParOpen.Location = new Point(9, 511);
+            btParOpen.Name = "btParOpen";
+            btParOpen.Size = new Size(67, 64);
+            btParOpen.TabIndex = 20;
+            btParOpen.Text = "(";
+            btParOpen.UseVisualStyleBackColor = true;
+            btParOpen.Click += btParaOpen_Click;
             // 
-            // btParaClose
+            // btParClose
             // 
-            btParaClose.Cursor = Cursors.Hand;
-            btParaClose.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
-            btParaClose.Location = new Point(82, 511);
-            btParaClose.Name = "btParaClose";
-            btParaClose.Size = new Size(67, 64);
-            btParaClose.TabIndex = 19;
-            btParaClose.Text = ")";
-            btParaClose.UseVisualStyleBackColor = true;
-            btParaClose.Click += btParaClose_Click;
+            btParClose.BackColor = SystemColors.Control;
+            btParClose.Cursor = Cursors.Hand;
+            btParClose.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            btParClose.Location = new Point(82, 511);
+            btParClose.Name = "btParClose";
+            btParClose.Size = new Size(67, 64);
+            btParClose.TabIndex = 19;
+            btParClose.Text = ")";
+            btParClose.UseVisualStyleBackColor = false;
+            btParClose.Click += btParaClose_Click;
             // 
             // btResult
             // 
@@ -286,7 +287,7 @@
             lboxCurrent.FormattingEnabled = true;
             lboxCurrent.Location = new Point(9, 193);
             lboxCurrent.Name = "lboxCurrent";
-            lboxCurrent.RightToLeft = RightToLeft.Yes;
+            lboxCurrent.RightToLeft = RightToLeft.No;
             lboxCurrent.Size = new Size(286, 25);
             lboxCurrent.TabIndex = 21;
             // 
@@ -297,7 +298,7 @@
             lboxHistory.FormattingEnabled = true;
             lboxHistory.Location = new Point(9, 11);
             lboxHistory.Name = "lboxHistory";
-            lboxHistory.RightToLeft = RightToLeft.Yes;
+            lboxHistory.RightToLeft = RightToLeft.No;
             lboxHistory.Size = new Size(286, 172);
             lboxHistory.TabIndex = 22;
             // 
@@ -308,8 +309,8 @@
             ClientSize = new Size(305, 584);
             Controls.Add(lboxHistory);
             Controls.Add(lboxCurrent);
-            Controls.Add(btParaOpen);
-            Controls.Add(btParaClose);
+            Controls.Add(btParOpen);
+            Controls.Add(btParClose);
             Controls.Add(btResult);
             Controls.Add(bt7);
             Controls.Add(bt8);
@@ -349,8 +350,8 @@
         private Button bt0;
         private Button btPoint;
         private Button btDivision;
-        private Button btParaOpen;
-        private Button btParaClose;
+        private Button btParOpen;
+        private Button btParClose;
         private Button btResult;
         private ListBox lboxCurrent;
         private ListBox lboxHistory;
