@@ -9,191 +9,181 @@ namespace Calculator
         {
             InitializeComponent();
         }
+        /*
+         * ##################################################################
+         * #                                                                #
+         * #    Input is saved as string currentCalc while inputting        #
+         * #    automatically formatted, so that numbers, operators         #
+         * #    and parentheses are always separated with a single          #
+         * #    space.                                                      #
+         * #    When result button is pressed, Calculate(string) takes      #
+         * #    currentCalc, splits it by spaces, parses the resulting      #
+         * #    list, calling itself on any substrings inside               #
+         * #    parentheses.                                                #
+         * #    Parsing results in a list of numbers and a list of          #
+         * #    operators, which are then processed to arrive at            #
+         * #    a result or error (for division by zero)                    #
+         * #                                                                #
+         * ##################################################################
+         */
 
         private List<string> history = new List<string>();
+        private string currentCalc = "";
         char[] numberArray = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
         char[] operatorArray = { '+', '-', '*', '/' };
-        private string currentCalc = "";
         int parOpen = 0;
         private bool calcSuccessful = false;
-        private bool postedError = false;
+        private bool errorIsPosted = false;
+        private bool debug = true;
 
         //perform calculation on currentCalc and return result, with flag calcSuccessful to indicate any errors
-        private double Calculate(string c)
+        private double Calculate(string calc)
         {
             List<double> numbers = new List<double>();
             List<char> operators = new List<char>();
             List<string> splitCalc;
-            double n;
-            double result;
+            bool hasOperator = false;
 
-            calcSuccessful = true; //true until error occurs
+            calc = calc.Trim('(', ')',' ');
 
-            //check if string is empty:
-            if (c == "")
+            //if calc contains no operators just return value
+            foreach (char c in operatorArray)
             {
-                if (postedError)
+                if (calc.Contains(c))
                 {
-                    history.RemoveAt(history.Count - 1);
-                    postedError = false;
+                    hasOperator = true;
+                    break;
                 }
-                return 0;
+            }
+            if (!hasOperator)
+            {
+                return Double.Parse(calc);
             }
 
-            //check parentheses
-            try
+            splitCalc = new List<string>(calc.Split(" "));
+
+            for (int i = 0; i < splitCalc.Count; i++) 
             {
-                CheckPar(c);
-            }
-            catch (ArgumentException)
-            {
-                PostError(postedError, "Unexpected Parenthesis");
-                return 0;
-            }
-            //split calculation string by " " and put into appropriate list
-            splitCalc = new List<string>(currentCalc.Split(" "));
-
-            //DEBUGGING
-            foreach( string s in splitCalc)
-            {
-                history.Add("\"" + s + "\"");
-                refreshHistory();
-            }
-            
-            for (int i = 0; i < splitCalc.Count; i++)
-            {
-
-
-                //if s is number:
-
-
+                //numbers
                 if (numberArray.Contains(splitCalc[i].First()))
                 {
-                    //if position valid
-                    if (numbers.Count == operators.Count)
-                    {
-                        //parse double and add to list numbers
-                        try
-                        {
-                            n = double.Parse(splitCalc[i]);
-                        }
-                        catch (FormatException)
-                        {
-                            PostError(postedError, "Invalid Number");
-                            return 0;
-                        }
-                        numbers.Add(n); //add to numbers
-                    }
-                    else //if position invalid: error
-                    {
-                        PostError(postedError, "Unexpected Number");
-                        return 0;
-                    }
+                    numbers.Add(Double.Parse(splitCalc[i]));
                 }
-
-
-                // else if s is operator:
-
-
+                //operators
                 else if (operatorArray.Contains(splitCalc[i].First()))
                 {
-                    //if position is valid
-                    if (numbers.Count == operators.Count + 1)
-                    {
-                        operators.Add(splitCalc[i].First()); //add to operators
-                    }
-                    else //if position invalid: error
-                    {
-                        PostError(postedError, "Unexpected Operator");
-                        return 0;
-                    }
+                    operators.Add(Char.Parse(splitCalc[i]));
                 }
-
-
-                // else if s is '('
-
-
+                //handle parentheses
                 else if (splitCalc[i] == "(")
                 {
-                    int openPar = 0;
-                    string substring;
-                    //if position is valid
-                    if (numbers.Count == operators.Count)
-                    {
-                        //find correct closing parenthesis, extract substring and call calculate(substring)
+                    //start at '('
+                    int sectionLength = 1,//count list entries
+                        open = 1;//count open parentheses
+                    string substringCalc = splitCalc[i];
 
-                        //find correct closing parenthesis
-                        for (int j=i; j < splitCalc.Count; j++)
+                    //find appropriate ')' starting at next list entry
+                    for (int j = i + 1; j < splitCalc.Count; j++)
+                    {
+                        substringCalc += " " + splitCalc[j];
+                        sectionLength++;
+
+                        if (splitCalc[j] == "(")
                         {
-                            if (splitCalc[j] == "(") //count parentheses starting with current "("
+                            open++;
+                        }
+                        else if (splitCalc[j] == ")")
+                        {
+                            open--;
+                            if (open == 0)
                             {
-                                openPar++;
-                            }
-                            else if (splitCalc[j] == ")")
-                            {
-                                openPar--;
-                            }
-                            //if openPar == 0, j is index of correct closing parenthesis
-                            if (openPar == 0)
-                            {
-                                //extract substring
-                                substring = splitCalc.Slice(i, j-i).ToString();
-                                //remove substring from splitCalc
-                                splitCalc.RemoveRange(i, j - i);
-                                //call calculate(substring), add to result to numbers
-                                numbers.Add (Calculate(substring));
+                                // appropriate ')' found
                                 break;
                             }
                         }
                     }
-                    //if position is invalid: error
-                    else
-                    {
-                        PostError(postedError, "Unexpected Parenthesis");
-                        return 0;
-                    }
+                    //call Calculate on section in parentheses
+                    numbers.Add(Calculate(substringCalc));
+                    //remove section from splitCalc
+                    splitCalc.RemoveRange(i, sectionLength);
                 }
             }
-            return 0;
+
+            //perform calculation
+            //'*' and '/' first:
+            while (operators.Count > 0)
+            {
+                for (int i = 0; i < operators.Count; i++)
+                {
+                    //while '*' and '/' operators are present, skip '+' and '-'
+                    if ((operators.Contains('*') ||  operators.Contains('/')) && 
+                        (operators[i] == '+' || operators[i] == '-'))
+                    {
+                        continue;
+                    }
+                    //execute operation
+                    if (!doMath(operators, numbers, i))
+                    {
+                        //division by zero
+                        calcSuccessful = false;
+                        return 0;
+                    }
+                    i--;
+                }
+            }
+
+            return numbers[0];
         }
 
-        //Handle error state and messages in lboxHistory:
-        private void PostError(bool prevErrorWasPosted, string message)
+        //perform operation at index, save output in numbers[index], removing operators[index] and numbers[index + 1]
+        private bool doMath(List<char> operators, List<double> numbers, int index)
         {
-            if (prevErrorWasPosted)
+            switch (operators[index])
+            {
+                case '+':
+                    if (debug) { history.Add(numbers[index].ToString() + " + " + numbers[index + 1].ToString() + " = " + (numbers[index] + numbers[index + 1])); }
+                    numbers[index] += numbers[index + 1];
+                    break;
+                case '-':
+                    if (debug) { history.Add(numbers[index].ToString() + " - " + numbers[index + 1].ToString() + " = " + (numbers[index] - numbers[index + 1])); }
+                    numbers[index] -= numbers[index + 1];
+                    break;
+                case '*':
+                    if (debug) { history.Add(numbers[index].ToString() + " * " + numbers[index + 1].ToString() + " = " + (numbers[index] * numbers[index + 1])); }
+                    numbers[index] *= numbers[index + 1];
+                    break;
+                case '/':
+                    //handle division by zero
+                    if (numbers[index + 1] == 0)
+                    {
+                        PostError("Division by Zero");
+                        return false;
+                    }
+                    else
+                    {
+                        if (debug) { history.Add(numbers[index].ToString() + " / " + numbers[index + 1].ToString() + " = " + (numbers[index] / numbers[index + 1])); }
+                        numbers[index] /= numbers[index + 1];
+                    }
+                    break;
+            }
+            operators.RemoveAt(index);
+            numbers.RemoveAt(index + 1);
+
+            return true;
+        }
+        
+        //Handle error state and messages in lboxHistory:
+        private void PostError(string message)
+        {
+            if (errorIsPosted)
             {
                 history.RemoveAt(history.Count - 1);
             }
             history.Add("Malformed expression: " + message);
-            postedError = true;
+            refreshHistory();
+            
+            errorIsPosted = true;
             calcSuccessful = false;
-        }
-        
-        //Check parentheses:
-        private void CheckPar(string currentCalc)
-        {
-            int openPar = 0;
-            //check for an opening parenthesis for every closing parenthesis
-            foreach (char c in currentCalc)
-            {
-                if (c == '(') { openPar++; }
-                if (c == ')')
-                {
-                    if (openPar > 0)
-                    {
-                        openPar--;
-                    }
-                    else
-                    {
-                        throw new ArgumentException("Malformed expression. Too many closing Parentheses");
-                    }
-                }
-            }
-            //check for not - closed parentheses
-            if (openPar > 0)
-            {
-                throw new ArgumentException("Malformed expression. Parentheses not closed.");
-            }
         }
 
         //Refresh lboxCurrent
@@ -214,24 +204,38 @@ namespace Calculator
             lboxHistory.TopIndex = lboxHistory.Items.Count - 1;
         }
 
+        //Handle adding a number
+        private void addNumber(char newNumber)
+        {
+            //not allowed after closing parenthesis
+            if (currentCalc.Length > 1 && currentCalc.Last() == ')') { return; }
+            //else allowed
+            else
+            {
+                currentCalc += newNumber;
+                refreshCurrent();
+            }
+        }
+
         //Handle adding an operator
         private void addOperator(char newOperator)
         {
-            int end = currentCalc.Count();
+            int end = currentCalc.Length;
 
             //not allowed on empty input:
             if (currentCalc == "") { return; }
             //not allowed if same operator already present:
             if (end > 2 && currentCalc.ElementAt(end - 2) == newOperator) { return; }
             //not allowed after opening parenthesis
-            if (end > 2 && currentCalc.ElementAt(end - 2) == '(') { return; }
+            if (end >= 2 && currentCalc.ElementAt(end - 2) == '(') { return; }
 
             //replace other operator if present
             if (end > 2 && operatorArray.Contains(currentCalc.ElementAt(end - 2)))
             {
                 currentCalc = currentCalc.Remove(end - 2) + newOperator + " ";
             }
-            else if (currentCalc.ElementAt(end-1) == '.') //remove point if is last char and add operator
+            //else remove point if point is last char and add operator
+            else if (currentCalc.ElementAt(end-1) == '.')
             {
                 currentCalc = currentCalc.Remove(end-1) + " " + newOperator + " ";
             }
@@ -240,36 +244,59 @@ namespace Calculator
                 currentCalc += " " + newOperator + " ";
             }
 
-                refreshCurrent();
+            refreshCurrent();
         }
 
         //Result button
         private void btResult_Click(object sender, EventArgs e)
         {
-            double result = Calculate(currentCalc);
-            if (calcSuccessful)
+            //not allowed on empty string
+            if (currentCalc.Length == 0) { return; }
+            //check for open parentheses
+            if (parOpen != 0)
             {
-                currentCalc += " = " + result.ToString();
-                if (postedError)
+                PostError("\")\" expected");
+                return;
+            }
+            //check for trailing operator
+            else if (operatorArray.Contains(currentCalc.Last()))
+            {
+                PostError("Unexpected operator");
+                return;
+            }
+            //else allowed
+            else
+            {
+                //trim trailing point if present
+                currentCalc = currentCalc.TrimEnd('.');
+
+                calcSuccessful = true; //true until error occurs
+
+                double result = Calculate(currentCalc);
+                if (calcSuccessful)
                 {
-                    history.RemoveAt(history.Count - 1);
+                    currentCalc += " = " + result.ToString();
+                    if (errorIsPosted)
+                    {
+                        history.RemoveAt(history.Count - 1);
+                    }
+                    history.Add(currentCalc);
+                    currentCalc = "";
+                    refreshCurrent();
+                    refreshHistory();
+                    calcSuccessful = false;
+                    errorIsPosted = false;
                 }
-                history.Add(currentCalc);
-                currentCalc = "";
-                refreshCurrent();
-                refreshHistory();
-                calcSuccessful = false;
-                postedError = false;
             }
         }
 
         //Clear Entry button:
         private void btCE_Click(object sender, EventArgs e)
         {
-            int end = currentCalc.Count();
+            int end = currentCalc.Length;
             //not allowed if string empty
             if (end == 0) { return;  }
-            //allowed if string.Count() < 3 OR last element is number OR last element is '.'
+            //allowed if string.Length < 3 OR last element is number OR last element is '.'
             if (end < 3 || numberArray.Contains(currentCalc.Last()) || currentCalc.Last() == '.')
             {
                 currentCalc = currentCalc.Remove(end - 1);
@@ -301,72 +328,10 @@ namespace Calculator
             refreshCurrent();
         }
 
-        //number buttons:
-
-        private void bt1_Click(object sender, EventArgs e)
-        {
-            currentCalc += "1";
-            refreshCurrent();
-        }
-
-        private void bt2_Click(object sender, EventArgs e)
-        {
-            currentCalc += "2";
-            refreshCurrent();
-        }
-
-        private void bt3_Click(object sender, EventArgs e)
-        {
-            currentCalc += "3";
-            refreshCurrent();
-        }
-
-        private void bt4_Click(object sender, EventArgs e)
-        {
-            currentCalc += "4";
-            refreshCurrent();
-        }
-
-        private void bt5_Click(object sender, EventArgs e)
-        {
-            currentCalc += "5";
-            refreshCurrent();
-        }
-
-        private void bt6_Click(object sender, EventArgs e)
-        {
-            currentCalc += "6";
-            refreshCurrent();
-        }
-
-        private void bt7_Click(object sender, EventArgs e)
-        {
-            currentCalc += "7";
-            refreshCurrent();
-        }
-
-        private void bt8_Click(object sender, EventArgs e)
-        {
-            currentCalc += "8";
-            refreshCurrent();
-        }
-
-        private void bt9_Click(object sender, EventArgs e)
-        {
-            currentCalc += "9";
-            refreshCurrent();
-        }
-
-        private void bt0_Click(object sender, EventArgs e)
-        {
-            currentCalc += "0";
-            refreshCurrent();
-        }
-
         private void btPoint_Click(object sender, EventArgs e)
         {
             //if added to empty string or after operator, add 0 before .
-            if (currentCalc.Last() == ' ' || currentCalc == "")
+            if (currentCalc == "" || currentCalc.Last() == ' ')
             {
                 currentCalc += "0.";
                 refreshCurrent();
@@ -383,7 +348,7 @@ namespace Calculator
         private void btParaOpen_Click(object sender, EventArgs e)
         {
             //only allow "(" at start of expression or after operator or opening parenthesis (which comes with a trailing space)
-            if (currentCalc.Last() == ' ' || currentCalc == "")
+            if (currentCalc == "" || currentCalc.Last() == ' ')
             {
                 currentCalc += "( ";// therefore counts as operator when last in string
                 parOpen++;
@@ -393,18 +358,73 @@ namespace Calculator
 
         private void btParaClose_Click(object sender, EventArgs e)
         {
-            //remove trailing point if present
-            if (currentCalc.Last() == '.')
+            //not allowed on empty string shorter than 2
+            if (currentCalc.Length < 2) { return; }
+            
+            //only allow ")" after a number or another ")" and if there are opening "("
+            if (parOpen > 0 && (numberArray.Contains(currentCalc.Last()) || currentCalc.Last() == ')'))
             {
-                currentCalc = currentCalc.Remove(currentCalc.Length - 1);
-            }
-            //only allow ")" after a number and if there are opening "("
-            if (parOpen > 0 && numberArray.Contains(currentCalc.Last()))
-            {
+                //remove trailing point if present
+                if (currentCalc.Last() == '.')
+                {
+                    currentCalc = currentCalc.Remove(currentCalc.Length - 1);
+                }
                 currentCalc += " )";
                 parOpen--;
                 refreshCurrent();
             }
+        }
+
+        //number buttons:
+
+        private void bt1_Click(object sender, EventArgs e)
+        {
+            addNumber('1');
+        }
+
+        private void bt2_Click(object sender, EventArgs e)
+        {
+            addNumber('2');
+        }
+
+        private void bt3_Click(object sender, EventArgs e)
+        {
+            addNumber('3');
+        }
+
+        private void bt4_Click(object sender, EventArgs e)
+        {
+            addNumber('4');
+        }
+
+        private void bt5_Click(object sender, EventArgs e)
+        {
+            addNumber('5');
+        }
+
+        private void bt6_Click(object sender, EventArgs e)
+        {
+            addNumber('6');
+        }
+
+        private void bt7_Click(object sender, EventArgs e)
+        {
+            addNumber('7');
+        }
+
+        private void bt8_Click(object sender, EventArgs e)
+        {
+            addNumber('8');
+        }
+
+        private void bt9_Click(object sender, EventArgs e)
+        {
+            addNumber('9');
+        }
+
+        private void bt0_Click(object sender, EventArgs e)
+        {
+            addNumber('0');
         }
 
         //operator buttons:
