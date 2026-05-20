@@ -30,7 +30,7 @@ Input is accumulated as a formatted string ('currentCalc') where numbers, operat
 
 ## Project Structure
 
-'''
+```
 Windows-Forms-Calculator/
 ├── Calculator.csproj       # Project file (.NET Windows Forms)
 ├── Program.cs              # Entry point
@@ -38,7 +38,7 @@ Windows-Forms-Calculator/
 ├── Form1.Designer.cs       # Auto-generated UI layout
 ├── Form1.resx              # Form resources
 └── Properties/             # Assembly info and settings
-'''
+```
 
 ---
 
@@ -53,9 +53,9 @@ Windows-Forms-Calculator/
 ## Getting Started
 
 1. Clone the repository:
-   '''bash
+   ```bash
    git clone https://github.com/Kopfman2731/Windows-Forms-Calculator.git
-   '''
+   ```
 
 2. Open 'Calculator.csproj' in Visual Studio.
 
