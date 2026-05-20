@@ -1,4 +1,5 @@
 using System.Drawing.Design;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace Calculator
@@ -35,6 +36,21 @@ namespace Calculator
         private bool calcSuccessful = false;
         private bool errorIsPosted = false;
         private bool debug = true;
+        private char decimalSeparator;
+
+        //when form is first loaded do
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            NumberFormatInfo nfInfo = CultureInfo.CurrentCulture.NumberFormat;
+            decimalSeparator = nfInfo.CurrencyDecimalSeparator.First();
+            btDecimalSeparator.Text = decimalSeparator.ToString();
+
+            if (debug)
+            {
+                history.Add("debug: decimal separator: " + decimalSeparator);
+            }
+        }
+
 
         //perform calculation on currentCalc and return result, with flag calcSuccessful to indicate any errors
         private double Calculate(string calc)
@@ -44,7 +60,7 @@ namespace Calculator
             List<string> splitCalc;
             bool hasOperator = false;
 
-            calc = calc.Trim('(', ')',' ');
+            calc = calc.Trim('(', ')', ' ');
 
             //if calc contains no operators just return value
             foreach (char c in operatorArray)
@@ -62,7 +78,7 @@ namespace Calculator
 
             splitCalc = new List<string>(calc.Split(" "));
 
-            for (int i = 0; i < splitCalc.Count; i++) 
+            for (int i = 0; i < splitCalc.Count; i++)
             {
                 //numbers
                 if (numberArray.Contains(splitCalc[i].First()))
@@ -116,7 +132,7 @@ namespace Calculator
                 for (int i = 0; i < operators.Count; i++)
                 {
                     //while '*' and '/' operators are present, skip '+' and '-'
-                    if ((operators.Contains('*') ||  operators.Contains('/')) && 
+                    if ((operators.Contains('*') || operators.Contains('/')) &&
                         (operators[i] == '+' || operators[i] == '-'))
                     {
                         continue;
@@ -141,15 +157,15 @@ namespace Calculator
             switch (operators[index])
             {
                 case '+':
-                    if (debug) { history.Add(numbers[index].ToString() + " + " + numbers[index + 1].ToString() + " = " + (numbers[index] + numbers[index + 1])); }
+                    if (debug) { history.Add("debug: " + numbers[index].ToString() + " + " + numbers[index + 1].ToString() + " = " + (numbers[index] + numbers[index + 1])); }
                     numbers[index] += numbers[index + 1];
                     break;
                 case '-':
-                    if (debug) { history.Add(numbers[index].ToString() + " - " + numbers[index + 1].ToString() + " = " + (numbers[index] - numbers[index + 1])); }
+                    if (debug) { history.Add("debug: " + numbers[index].ToString() + " - " + numbers[index + 1].ToString() + " = " + (numbers[index] - numbers[index + 1])); }
                     numbers[index] -= numbers[index + 1];
                     break;
                 case '*':
-                    if (debug) { history.Add(numbers[index].ToString() + " * " + numbers[index + 1].ToString() + " = " + (numbers[index] * numbers[index + 1])); }
+                    if (debug) { history.Add("debug: " + numbers[index].ToString() + " * " + numbers[index + 1].ToString() + " = " + (numbers[index] * numbers[index + 1])); }
                     numbers[index] *= numbers[index + 1];
                     break;
                 case '/':
@@ -161,7 +177,7 @@ namespace Calculator
                     }
                     else
                     {
-                        if (debug) { history.Add(numbers[index].ToString() + " / " + numbers[index + 1].ToString() + " = " + (numbers[index] / numbers[index + 1])); }
+                        if (debug) { history.Add("debug: " + numbers[index].ToString() + " / " + numbers[index + 1].ToString() + " = " + (numbers[index] / numbers[index + 1])); }
                         numbers[index] /= numbers[index + 1];
                     }
                     break;
@@ -171,7 +187,7 @@ namespace Calculator
 
             return true;
         }
-        
+
         //Handle error state and messages in lboxHistory:
         private void PostError(string message)
         {
@@ -181,7 +197,7 @@ namespace Calculator
             }
             history.Add("Malformed expression: " + message);
             refreshHistory();
-            
+
             errorIsPosted = true;
             calcSuccessful = false;
         }
@@ -235,9 +251,9 @@ namespace Calculator
                 currentCalc = currentCalc.Remove(end - 2) + newOperator + " ";
             }
             //else remove point if point is last char and add operator
-            else if (currentCalc.ElementAt(end-1) == '.')
+            else if (currentCalc.ElementAt(end - 1) == decimalSeparator)
             {
-                currentCalc = currentCalc.Remove(end-1) + " " + newOperator + " ";
+                currentCalc = currentCalc.Remove(end - 1) + " " + newOperator + " ";
             }
             else //else operator is allowed
             {
@@ -268,7 +284,7 @@ namespace Calculator
             else
             {
                 //trim trailing point if present
-                currentCalc = currentCalc.TrimEnd('.');
+                currentCalc = currentCalc.TrimEnd(decimalSeparator);
 
                 calcSuccessful = true; //true until error occurs
 
@@ -295,9 +311,9 @@ namespace Calculator
         {
             int end = currentCalc.Length;
             //not allowed if string empty
-            if (end == 0) { return;  }
-            //allowed if string.Length < 3 OR last element is number OR last element is '.'
-            if (end < 3 || numberArray.Contains(currentCalc.Last()) || currentCalc.Last() == '.')
+            if (end == 0) { return; }
+            //allowed if string.Length < 3 OR last element is number OR last element is decimalSeparator
+            if (end < 3 || numberArray.Contains(currentCalc.Last()) || currentCalc.Last() == decimalSeparator)
             {
                 currentCalc = currentCalc.Remove(end - 1);
             }
@@ -328,17 +344,17 @@ namespace Calculator
             refreshCurrent();
         }
 
-        private void btPoint_Click(object sender, EventArgs e)
+        private void btDecimalSeparator_Click(object sender, EventArgs e)
         {
             //if added to empty string or after operator, add 0 before .
             if (currentCalc == "" || currentCalc.Last() == ' ')
             {
-                currentCalc += "0.";
+                currentCalc += "0" + decimalSeparator;
                 refreshCurrent();
             }
             else if (numberArray.Contains(currentCalc.Last())) //allowed if added after number
             {
-                currentCalc += ".";
+                currentCalc += decimalSeparator;
                 refreshCurrent();
             }
         }
@@ -358,14 +374,14 @@ namespace Calculator
 
         private void btParaClose_Click(object sender, EventArgs e)
         {
-            //not allowed on empty string shorter than 2
+            //not allowed on string shorter than 2
             if (currentCalc.Length < 2) { return; }
-            
-            //only allow ")" after a number or another ")" and if there are opening "("
-            if (parOpen > 0 && (numberArray.Contains(currentCalc.Last()) || currentCalc.Last() == ')'))
+
+            //only allow ")" after a number, trailing point or another ")" and if there are opening "("
+            if (parOpen > 0 && (numberArray.Contains(currentCalc.Last()) || currentCalc.Last() == ')') || currentCalc.Last() == decimalSeparator)
             {
                 //remove trailing point if present
-                if (currentCalc.Last() == '.')
+                if (currentCalc.Last() == decimalSeparator)
                 {
                     currentCalc = currentCalc.Remove(currentCalc.Length - 1);
                 }
