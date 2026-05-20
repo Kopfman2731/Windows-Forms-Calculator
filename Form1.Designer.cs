@@ -1,6 +1,6 @@
 ﻿namespace Calculator
 {
-    partial class Form1
+    partial class CalculatorForm
     {
         /// <summary>
         ///  Required designer variable.
@@ -344,7 +344,7 @@
             lboxHistory.Size = new Size(286, 172);
             lboxHistory.TabIndex = 22;
             // 
-            // Form1
+            // CalculatorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -371,7 +371,8 @@
             Controls.Add(bt3);
             Controls.Add(bt2);
             Controls.Add(bt1);
-            Name = "Form1";
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            Name = "CalculatorForm";
             Text = "Calculator";
             Load += Form1_Load;
             ResumeLayout(false);

@@ -1,12 +1,13 @@
 using System.Drawing.Design;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 
 namespace Calculator
 {
-    public partial class Form1 : Form
+    public partial class CalculatorForm : Form
     {
-        public Form1()
+        public CalculatorForm()
         {
             InitializeComponent();
         }
@@ -35,7 +36,7 @@ namespace Calculator
         int parOpen = 0;
         private bool calcSuccessful = false;
         private bool errorIsPosted = false;
-        private bool debug = true;
+        private bool debug = false;
         private char decimalSeparator;
 
         //when form is first loaded do
@@ -65,7 +66,7 @@ namespace Calculator
             //if calc contains no operators just return value
             foreach (char c in operatorArray)
             {
-                if (calc.Contains(c))
+                if (calc.Contains(c + " "))
                 {
                     hasOperator = true;
                     break;
@@ -81,12 +82,12 @@ namespace Calculator
             for (int i = 0; i < splitCalc.Count; i++)
             {
                 //numbers
-                if (numberArray.Contains(splitCalc[i].First()))
+                if (numberArray.Contains(splitCalc[i].First()) || ( splitCalc[i].Length > 1 && numberArray.Contains(splitCalc[i].ElementAt(1))))
                 {
                     numbers.Add(Double.Parse(splitCalc[i]));
                 }
                 //operators
-                else if (operatorArray.Contains(splitCalc[i].First()))
+                else if (splitCalc[i].Length == 1 && operatorArray.Contains(splitCalc[i].First()))
                 {
                     operators.Add(Char.Parse(splitCalc[i]));
                 }
@@ -228,6 +229,20 @@ namespace Calculator
             //else allowed
             else
             {
+                //handle zeroes
+                //if currentCalc == "0" or last element is '0' and preceeded by not a number
+                if (currentCalc == "0" || currentCalc.Length > 1 && currentCalc.Last() == '0' && !numberArray.Contains(currentCalc.ElementAt(currentCalc.Length - 2)))
+                {
+                    //new zero not allowed if zero is already in last position
+                    if (newNumber == '0')
+                    {
+                        return;
+                    }
+                    //else delete last position
+                    {
+                        currentCalc = currentCalc.Remove(currentCalc.Length - 1);
+                    }
+                }
                 currentCalc += newNumber;
                 refreshCurrent();
             }
@@ -238,15 +253,49 @@ namespace Calculator
         {
             int end = currentCalc.Length;
 
-            //not allowed on empty input:
-            if (currentCalc == "") { return; }
+            //not allowed on empty input, unless newOperator is '-' as a sign
+            if (currentCalc == "")
+            {
+                if (newOperator == '-')
+                {
+                    currentCalc += '-';
+                    refreshCurrent();
+                    return;
+                }
+                else
+                {
+                    return;
+                }
+            }
+            //not allowed after '-' as a sign, unless newOperators is '-' then remove it
+            if (currentCalc.Last() == '-')
+            {
+                if (newOperator == '-')
+                {
+                    currentCalc = currentCalc.Remove(currentCalc.Length - 1);
+                    refreshCurrent();
+                }
+                return;
+            }
             //not allowed if same operator already present:
-            if (end > 2 && currentCalc.ElementAt(end - 2) == newOperator) { return; }
-            //not allowed after opening parenthesis
-            if (end >= 2 && currentCalc.ElementAt(end - 2) == '(') { return; }
+            if (end > 2 && currentCalc.ElementAt(end - 2) == newOperator && !numberArray.Contains(currentCalc.Last())) { return; }
+            //not allowed after opening parenthesis, unless newOperator is '-' as a sign
+            if (end >= 2 && currentCalc.ElementAt(end - 2) == '(') 
+            {
+                if (newOperator == '-')
+                {
+                    currentCalc += '-';
+                    refreshCurrent();
+                    return;
+                }
+                else
+                {
+                    return;
+                }
+            }
 
             //replace other operator if present
-            if (end > 2 && operatorArray.Contains(currentCalc.ElementAt(end - 2)))
+            if (end > 2 && operatorArray.Contains(currentCalc.ElementAt(end - 2)) && !numberArray.Contains(currentCalc.Last()))
             {
                 currentCalc = currentCalc.Remove(end - 2) + newOperator + " ";
             }
@@ -334,6 +383,12 @@ namespace Calculator
                     parOpen--;
                 }
             }
+            //handle sign
+            else if (currentCalc.Last() == '-')
+            {
+                //remove 1 element
+                currentCalc = currentCalc.Remove(end - 1);
+            }
             //handle closing parenthesis
             else if (currentCalc.Last() == ')')
             {
@@ -347,7 +402,7 @@ namespace Calculator
         private void btDecimalSeparator_Click(object sender, EventArgs e)
         {
             //if added to empty string or after operator, add 0 before .
-            if (currentCalc == "" || currentCalc.Last() == ' ')
+            if (currentCalc == "" || currentCalc.Last() == ' ' || currentCalc.Last() == '-')
             {
                 currentCalc += "0" + decimalSeparator;
                 refreshCurrent();
