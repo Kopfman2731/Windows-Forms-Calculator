@@ -224,28 +224,35 @@ namespace Calculator
         //Handle adding a number
         private void addNumber(char newNumber)
         {
-            //not allowed after closing parenthesis
-            if (currentCalc.Length > 1 && currentCalc.Last() == ')') { return; }
-            //else allowed
-            else
+            //handle zeroes when currentCalc short
+            if (currentCalc == "0")
             {
-                //handle zeroes
-                //if currentCalc == "0" or last element is '0' and preceeded by not a number
-                if (currentCalc == "0" || currentCalc.Length > 1 && currentCalc.Last() == '0' && !numberArray.Contains(currentCalc.ElementAt(currentCalc.Length - 2)))
+                //new zero not allowed if zero is already in last position
+                if (newNumber == '0')
                 {
-                    //new zero not allowed if zero is already in last position
-                    if (newNumber == '0')
-                    {
-                        return;
-                    }
-                    //else delete last position
-                    {
-                        currentCalc = currentCalc.Remove(currentCalc.Length - 1);
-                    }
+                    return;
                 }
-                currentCalc += newNumber;
-                refreshCurrent();
+                //else delete last position and continue
+                {
+                    currentCalc = "";
+                }
             }
+            //handle zeroes when currentCalc longer and last is zero...
+            else if (currentCalc.Length > 1 && currentCalc.Last() == '0')
+            {
+                //... preceeded by a space or a negative sing
+                if (currentCalc.ElementAt(currentCalc.Length - 2) == ' ' || currentCalc.ElementAt(currentCalc.Length - 2) == '-')
+                {
+                    //delete last position and continue
+                    currentCalc = currentCalc.Remove(currentCalc.Length - 1);
+                }
+            }
+            //not allowed after closing parenthesis
+            else if (currentCalc.Length > 1 && currentCalc.Last() == ')') { return; }
+            //else allowed
+
+            currentCalc += newNumber;
+            refreshCurrent();
         }
 
         //Handle adding an operator
@@ -433,7 +440,7 @@ namespace Calculator
             if (currentCalc.Length < 2) { return; }
 
             //only allow ")" after a number, trailing point or another ")" and if there are opening "("
-            if (parOpen > 0 && (numberArray.Contains(currentCalc.Last()) || currentCalc.Last() == ')') || currentCalc.Last() == decimalSeparator)
+            if (parOpen > 0 && ((numberArray.Contains(currentCalc.Last()) || currentCalc.Last() == ')') || currentCalc.Last() == decimalSeparator))
             {
                 //remove trailing point if present
                 if (currentCalc.Last() == decimalSeparator)
